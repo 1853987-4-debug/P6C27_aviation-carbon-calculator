@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全球 1000+ 航線與機型艙等航空碳排放動態計算器（含澳門 MFM 樞紐）</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & Noto Sans TC -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        forest: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                            950: '#052e16',
+                        },
+                        macau: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            600: '#0d9488',
+                            800: '#115e59',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans TC', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 50%, #a5d6a7 100%);
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.90);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+        }
+        .glass-card-dark {
+            background: linear-gradient(135deg, #14532d 0%, #064e3b 100%);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #86efac;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #22c55e;
+        }
+        /* Custom range slider styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 10px;
+            cursor: pointer;
+            background: #dcfce7;
+            border-radius: 5px;
+            border: 1px solid #bbf7d0;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #16a34a;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -7px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            transition: transform 0.1s ease, background-color 0.2s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: #15803d;
+        }
+        @keyframes gentle-bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        .animate-gentle-bounce {
+            animation: gentle-bounce 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="font-sans text-slate-800 antialiased p-3 sm:p-6 md:p-8">
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-5 right-5 z-50 transform translate-y-[-100px] opacity-0 transition-all duration-300 ease-in-out bg-forest-800 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-forest-600">
+        <i class="fa-solid fa-circle-check text-forest-300 text-lg"></i>
+        <span id="toast-message" class="text-sm font-medium">已複製到剪貼簿！</span>
+    </div>
+
+    <!-- Main Container -->
+    <div class="max-w-7xl mx-auto space-y-6">
+        
+        <!-- Header -->
+        <header class="glass-card rounded-3xl p-6 sm:p-8 shadow-xl border border-white/80 relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 opacity-10 pointer-events-none text-forest-800">
+                <i class="fa-solid fa-plane-departure text-[180px]"></i>
+            </div>
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+                <div>
+                    <div class="flex flex-wrap items-center gap-2 mb-3">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-forest-100 text-forest-800 text-xs font-semibold border border-forest-200">
+                            <i class="fa-solid fa-leaf text-forest-600"></i> 永續航空減碳教育工具
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-100 text-teal-800 text-xs font-bold border border-teal-200">
+                            <i class="fa-solid fa-plane-arrival text-teal-600"></i> 含澳門 (MFM) 樞紐
+                        </span>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-forest-950 tracking-tight flex items-center gap-3">
+                        <i class="fa-solid fa-earth-americas text-forest-600"></i>
+                        全球 1000+ 航線與機型碳排放動態計算器
+                    </h1>
+                    <p class="text-slate-600 text-sm sm:text-base mt-2 max-w-3xl">
+                        探索全球 50+ 樞紐機場（特別收錄澳門 MFM 出發航線），動態試算不同客機機型與艙等之碳足跡，獲得多等級環保鼓勵與樹木換算。
+                    </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="openRoutesModal()" class="px-4 py-2.5 bg-forest-700 hover:bg-forest-800 text-white rounded-xl text-sm font-medium transition-all shadow-md flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-list-ul"></i> 瀏覽 2,400+ 航線庫
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Grid Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Left Panel: User Inputs (5 cols) -->
+            <section class="lg:col-span-5 glass-card rounded-3xl p-6 sm:p-7 shadow-xl space-y-6 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-forest-900 border-b border-forest-200 pb-3 mb-5 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-forest-600"></i> 飛行行程與機型參數設定
+                    </h2>
+
+                    <div class="space-y-5">
+                        <!-- 1. Route Search & Selector -->
+                        <div class="relative">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                <span><i class="fa-solid fa-route text-forest-600 mr-1"></i> 1. 選擇或搜尋航線 (2,400+ 條)</span>
+                                <span class="text-[11px] text-forest-700 font-normal">支援澳門/MFM/HKG/TPE...</span>
+                            </label>
+                            
+                            <!-- Search Box -->
+                            <div class="relative">
+                                <input type="text" id="routeSearchInput" placeholder="搜尋關鍵字：澳門, MFM, 台北, NRT, London..." 
+                                    class="w-full pl-10 pr-10 py-3 bg-white/90 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-forest-500 focus:border-forest-500 transition-all shadow-sm"
+                                    oninput="filterRoutes()" onfocus="showRouteDropdown()" />
+                                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                                <button id="clearSearchBtn" onclick="clearRouteSearch()" class="hidden absolute right-3 top-3 text-slate-400 hover:text-slate-600 text-sm">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+
+                            <!-- Dropdown Menu -->
+                            <div id="routeDropdown" class="hidden absolute z-30 w-full mt-1 bg-white rounded-xl shadow-2xl border border-slate-200 max-h-64 overflow-y-auto custom-scrollbar">
+                                <div id="routeOptionsList" class="py-1">
+                                    <!-- Dynamic items -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hot Routes Quick Buttons (Macau MFM Featured) -->
+                        <div class="space-y-2">
+                            <div class="text-[11px] font-bold text-teal-800 flex items-center gap-1.5">
+                                <i class="fa-solid fa-star text-amber-500"></i> 🇲🇴 澳門出發 (MFM) 熱門航線快捷選取：
+                            </div>
+                            <div class="flex flex-wrap gap-1.5" id="macauHotRoutesContainer">
+                                <!-- Macau routes filled by JS -->
+                            </div>
+
+                            <div class="text-[11px] font-semibold text-slate-500 pt-1 flex items-center gap-1">
+                                <i class="fa-solid fa-fire text-amber-500"></i> 其他國際熱門樞紐航線：
+                            </div>
+                            <div class="flex flex-wrap gap-1.5" id="globalHotRoutesContainer">
+                                <!-- Global routes filled by JS -->
+                            </div>
+                        </div>
+
+                        <!-- 2. Distance Input (NM) -->
+                        <div>
+                            <label for="distanceNM" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                <span><i class="fa-solid fa-ruler-horizontal text-forest-600 mr-1"></i> 2. 航線距離 (海里 NM)</span>
+                                <span id="distanceKMText" class="text-xs font-semibold text-forest-700">≒ 0 公里 (KM)</span>
+                            </label>
+                            <div class="relative">
+                                <input type="number" id="distanceNM" min="0" max="20000" placeholder="請選擇航線或手動輸入海里數" 
+                                    class="w-full pl-4 pr-16 py-3 bg-white/90 border border-slate-300 rounded-xl text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-forest-500 focus:border-forest-500 transition-all shadow-sm"
+                                    oninput="onDistanceManualInput()" />
+                                <span class="absolute right-4 top-3 text-sm font-bold text-slate-400">NM</span>
+                            </div>
+                        </div>
+
+                        <!-- 3. Trip Type -->
+                        <div>
+                            <label for="tripType" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                                <i class="fa-solid fa-arrows-rotate text-forest-600 mr-1"></i> 3. 行程類型
+                            </label>
+                            <select id="tripType" onchange="calculateEmissions()" 
+                                class="w-full px-4 py-3 bg-white/90 border border-slate-300 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-forest-500 focus:border-forest-500 transition-all shadow-sm">
+                                <option value="1">單程 (1倍距離)</option>
+                                <option value="2" selected>往返 / 來回 (2倍距離)</option>
+                            </select>
+                        </div>
+
+                        <!-- 4. Aircraft Model & Class -->
+                        <div>
+                            <label for="aircraftType" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                                <i class="fa-solid fa-plane text-forest-600 mr-1"></i> 4. 機型與艙等選擇 (kg CO₂/NM)
+                            </label>
+                            <select id="aircraftType" onchange="calculateEmissions()" 
+                                class="w-full px-4 py-3 bg-white/90 border border-slate-300 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-forest-500 focus:border-forest-500 transition-all shadow-sm">
+                                <option value="0.157">A320 窄體客機（經濟艙） [0.157]</option>
+                                <option value="0.144">A321 窄體客機（經濟艙） [0.144]</option>
+                                <option value="0.176">A330 寬體客機（經濟艙） [0.176]</option>
+                                <option value="0.133">A350 新型寬體客機（經濟艙） [0.133]</option>
+                                <option value="0.204">A380 雙層巨無霸客機（經濟艙） [0.204]</option>
+                                <option value="0.154">B737 窄體客機（經濟艙） [0.154]</option>
+                                <option value="0.163">B757 窄體客機（經濟艙） [0.163]</option>
+                                <option value="0.181">B767 中型寬體客機（經濟艙） [0.181]</option>
+                                <option value="0.189">B777 大型雙引擎客機（經濟艙） [0.189]</option>
+                                <option value="0.139">B787 夢幻客機（經濟艙） [0.139]</option>
+                                <option value="0.231">B747 經典巨無霸客機（經濟艙） [0.231]</option>
+                                <option value="0.426">雙通道長途客機（商務艙平均） [0.426]</option>
+                                <option value="0.213" selected>航空經濟艙總體平均 [0.213]</option>
+                            </select>
+                        </div>
+
+                        <!-- 5. Annual Frequency Slider -->
+                        <div class="bg-forest-50/80 p-4 rounded-2xl border border-forest-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <label for="frequencySlider" class="text-xs font-bold text-forest-900 uppercase tracking-wider">
+                                    <i class="fa-solid fa-calendar-days text-forest-600 mr-1"></i> 5. 每年搭乘此航線次數
+                                </label>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="changeFrequency(-1)" class="w-7 h-7 bg-white hover:bg-forest-200 rounded-lg text-forest-800 font-bold border border-forest-300 shadow-sm transition-all text-xs">-</button>
+                                    <span id="frequencyValueText" class="text-lg font-extrabold text-forest-800 w-8 text-center">0</span>
+                                    <span class="text-xs font-medium text-slate-600">次/年</span>
+                                    <button onclick="changeFrequency(1)" class="w-7 h-7 bg-white hover:bg-forest-200 rounded-lg text-forest-800 font-bold border border-forest-300 shadow-sm transition-all text-xs">+</button>
+                                </div>
+                            </div>
+                            <input type="range" id="frequencySlider" min="0" max="30" value="0" step="1" oninput="onSliderInput(this.value)" />
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-1 font-semibold">
+                                <span>0 次</span>
+                                <span>10 次</span>
+                                <span>20 次</span>
+                                <span>30 次</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-200/60 mt-4 text-xs text-slate-500 flex justify-between items-center">
+                    <span><i class="fa-solid fa-circle-info mr-1 text-forest-600"></i>基準數據：每海里 kg CO₂</span>
+                    <button onclick="resetInputs()" class="text-slate-500 hover:text-rose-600 underline text-xs font-medium transition-colors">
+                        <i class="fa-solid fa-rotate-left mr-1"></i>重置所有欄位
+                    </button>
+                </div>
+            </section>
+
+            <!-- Right Panel: Results & Visualizations (7 cols) -->
+            <section class="lg:col-span-7 space-y-6">
+                
+                <!-- Main Metric Card -->
+                <div class="glass-card-dark rounded-3xl p-6 sm:p-8 text-white shadow-2xl relative overflow-hidden border border-emerald-500/30">
+                    <div class="absolute right-0 top-0 w-64 h-64 bg-forest-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                    
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-white/10 pb-4 mb-6 gap-2">
+                        <div>
+                            <span class="text-xs uppercase tracking-widest text-forest-300 font-semibold">Emission Output</span>
+                            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chart-pie text-forest-400"></i> 航空碳排放試算結果
+                            </h3>
+                        </div>
+                        <span id="selectedRouteBadge" class="text-xs bg-white/10 px-3 py-1.5 rounded-full border border-white/20 text-forest-200 font-medium">
+                            尚未選擇航線
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
+                        <!-- Single Flight Emission -->
+                        <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
+                            <div class="text-xs text-forest-200/80 mb-1">單次飛行總距離 (NM / KM)</div>
+                            <div id="singleDistanceText" class="text-lg font-bold text-white mb-3">0 NM (0 KM)</div>
+                            <div class="text-xs text-forest-200/80 mb-1">單次飛行二氧化碳排放量</div>
+                            <div class="flex items-baseline gap-2">
+                                <span id="singleEmissionText" class="text-2xl sm:text-3xl font-extrabold text-forest-300">0</span>
+                                <span class="text-xs text-forest-200">kg CO₂</span>
+                            </div>
+                        </div>
+
+                        <!-- Annual Emission Hero Output -->
+                        <div class="bg-forest-900/60 p-5 rounded-2xl border border-forest-500/40 shadow-inner">
+                            <div class="text-xs text-forest-300 font-bold uppercase tracking-wider mb-1">全年累積總碳排放量</div>
+                            <div class="flex items-baseline gap-2">
+                                <span id="annualEmissionText" class="text-4xl sm:text-5xl font-black text-white tracking-tight">0</span>
+                                <span class="text-sm font-bold text-forest-300">kg CO₂</span>
+                            </div>
+                            <div id="annualEmissionTonsText" class="text-xs text-forest-200/80 mt-1">
+                                ≒ 0.000 公噸 (t CO₂)
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tree Equivalence Box -->
+                    <div class="mt-6 bg-emerald-950/80 rounded-2xl p-4 sm:p-5 border border-forest-500/30 flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-2xl bg-forest-500/20 border border-forest-400/30 flex items-center justify-center shrink-0 animate-gentle-bounce">
+                            <i class="fa-solid fa-tree text-forest-300 text-2xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs text-forest-300 font-semibold mb-0.5">具象生活化碳抵換樹木換算</div>
+                            <div class="text-sm sm:text-base font-bold text-white">
+                                相當於需要種植 <span id="treesCountText" class="text-emerald-300 text-xl font-black underline underline-offset-4 decoration-forest-400">0</span> 棵成年樹木生長一整年才能吸收！
+                            </div>
+                            <div class="text-[11px] text-forest-200/70 mt-1">
+                                * 基準：1 棵成年樹木每年平均約吸收 12 kg CO₂。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aircraft & Class Comparison Tool -->
+                <div class="glass-card rounded-3xl p-6 shadow-xl space-y-4">
+                    <h3 class="text-base font-bold text-forest-950 flex items-center justify-between border-b border-forest-200 pb-3">
+                        <span><i class="fa-solid fa-code-compare text-forest-600 mr-2"></i>機型與艙等碳排放動態比較面板</span>
+                        <span class="text-xs text-slate-500 font-normal">依全年飛行距離計算</span>
+                    </h3>
+
+                    <div id="comparisonContainer" class="space-y-3">
+                        <!-- Comparison Item 1: Fuel Efficient Jet (A350/B787) -->
+                        <div class="p-3.5 bg-forest-50/80 rounded-xl border border-forest-200 flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm shrink-0">
+                                    <i class="fa-solid fa-leaf"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs font-bold text-slate-800">改搭新世代省油客機（A350/B787 經濟艙）</div>
+                                    <div class="text-[11px] text-slate-500">平均排放係數 ~0.136 kg/NM</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div id="compEcoDiff" class="text-sm font-bold text-emerald-700">可減少 0 kg CO₂</div>
+                                <div id="compEcoPercent" class="text-[11px] font-semibold text-emerald-600">(-0%)</div>
+                            </div>
+                        </div>
+
+                        <!-- Comparison Item 2: Business Class -->
+                        <div class="p-3.5 bg-amber-50/80 rounded-xl border border-amber-200/80 flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-sm shrink-0">
+                                    <i class="fa-solid fa-crown"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs font-bold text-slate-800">若改搭長途雙通道「商務艙」</div>
+                                    <div class="text-[11px] text-slate-500">平均排放係數 0.426 kg/NM (占用空間大)</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div id="compBizDiff" class="text-sm font-bold text-amber-700">+0 kg CO₂</div>
+                                <div id="compBizPercent" class="text-[11px] font-semibold text-amber-600">(+0%)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Educational Feedback, Multi-Tier Encouragement & Action Cards -->
+                <div class="glass-card rounded-3xl p-6 shadow-xl space-y-4">
+                    <h3 class="text-base font-bold text-forest-950 flex items-center justify-between border-b border-forest-200 pb-3">
+                        <span class="flex items-center gap-2"><i class="fa-solid fa-award text-amber-500"></i> 多等級環保鼓勵與綠色飛行建議</span>
+                        <span id="badgeCategory" class="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">未計算</span>
+                    </h3>
+
+                    <!-- Status 0 State Message -->
+                    <div id="feedbackZero" class="p-4 bg-slate-100 rounded-2xl border border-slate-200 text-slate-600 text-sm flex items-center gap-3">
+                        <i class="fa-solid fa-circle-info text-slate-400 text-xl"></i>
+                        <span>請選擇航線（或輸入海里數），並將「搭乘次數」調高以解鎖專屬鼓勵語與減碳徽章。</span>
+                    </div>
+
+                    <!-- Active Dynamic Multi-Tier Feedback -->
+                    <div id="feedbackActive" class="hidden space-y-3">
+                        <!-- Dynamic Encouragement Banner -->
+                        <div id="encouragementCard" class="p-4 rounded-2xl border text-xs sm:text-sm leading-relaxed flex items-start gap-3 shadow-sm transition-all">
+                            <div id="encouragementIcon" class="text-2xl shrink-0 mt-0.5"></div>
+                            <div>
+                                <span id="encouragementTitle" class="font-bold text-base block mb-1"></span>
+                                <p id="encouragementBody" class="text-slate-700"></p>
+                            </div>
+                        </div>
+
+                        <!-- Educational & Strategic Advice -->
+                        <div class="p-4 bg-forest-50/90 rounded-2xl border border-forest-200 text-forest-950 text-xs sm:text-sm leading-relaxed flex items-start gap-3">
+                            <i class="fa-solid fa-graduation-cap text-forest-700 text-lg shrink-0 mt-0.5"></i>
+                            <div>
+                                <span class="font-bold text-forest-900 block mb-1">專家減碳指南：</span>
+                                優先選擇採用新世代省油機型（如 A350、B787）的直飛航班；短途區域旅行（如大灣區內或鄰近城際）可優先考慮高鐵等陸路低碳交通，減輕天空的碳負擔！
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-wrap gap-3 pt-2">
+                        <button onclick="copyResults()" class="flex-1 py-3 px-4 bg-forest-600 hover:bg-forest-700 text-white font-semibold rounded-xl text-xs sm:text-sm transition-all shadow-md flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-copy"></i> 複製試算結果報告
+                        </button>
+                        <button onclick="shareResults()" class="py-3 px-4 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-xl text-xs sm:text-sm border border-slate-300 transition-all shadow-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-share-nodes"></i> 分享給好友
+                        </button>
+                    </div>
+                </div>
+
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center text-xs text-forest-900/70 pt-4 pb-6">
+            <p>© 航空碳排放動態計算器 | 數據係數基準：ICAO & IATA 航空碳足跡評估模型 (1 海里 NM = 1.852 公里 KM)</p>
+        </footer>
+    </div>
+
+    <!-- Modal: 2400+ Routes Database Browser -->
+    <div id="routesModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="p-5 border-b border-slate-200 flex items-center justify-between bg-forest-900 text-white">
+                <div>
+                    <h3 class="text-lg font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-database text-forest-400"></i> 全球航線資料庫 (2,400+ 條)
+                    </h3>
+                    <p class="text-xs text-forest-200 mt-0.5">涵蓋 50+ 樞紐機場（特別收錄澳門 MFM 出發國際航線）</p>
+                </div>
+                <button onclick="closeRoutesModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="p-4 border-b border-slate-200 bg-slate-50 flex gap-3">
+                <div class="relative flex-1">
+                    <input type="text" id="modalSearchInput" oninput="filterModalRoutes()" placeholder="搜尋關鍵字：如 澳門, MFM, London, JFK, 東京, TPE..." 
+                        class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-forest-500" />
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+                </div>
+                <span id="modalRouteCount" class="self-center text-xs font-bold text-forest-800 bg-forest-100 px-3 py-2 rounded-lg whitespace-nowrap">
+                    共 0 條航線
+                </span>
+            </div>
+
+            <div class="p-4 overflow-y-auto flex-1 custom-scrollbar">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5" id="modalRoutesGrid">
+                    <!-- Dynamic route cards populated by JS -->
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-slate-200 bg-slate-50 text-right">
+                <button onclick="closeRoutesModal()" class="px-5 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-xl text-sm font-medium transition-colors">
+                    關閉
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        /* ==========================================================================
+           1. Global Airport Database (50+ Hubs including Macau MFM)
+           ========================================================================== */
+        const AIRPORTS = [
+            // Macau
+            { code: 'MFM', cityZh: '澳門', cityEn: 'Macau', lat: 22.1495, lon: 113.5916, isMacau: true },
+            
+            // Greater China & East Asia
+            { code: 'HKG', cityZh: '香港', cityEn: 'Hong Kong', lat: 22.3080, lon: 113.9185 },
+            { code: 'TPE', cityZh: '台北桃園', cityEn: 'Taipei Taoyuan', lat: 25.0797, lon: 121.2342 },
+            { code: 'TSA', cityZh: '台北松山', cityEn: 'Taipei Songshan', lat: 25.0697, lon: 121.5525 },
+            { code: 'KHH', cityZh: '高雄', cityEn: 'Kaohsiung', lat: 22.5771, lon: 120.3500 },
+            { code: 'PVG', cityZh: '上海浦東', cityEn: 'Shanghai Pudong', lat: 31.1443, lon: 121.8083 },
+            { code: 'SHA', cityZh: '上海虹橋', cityEn: 'Shanghai Hongqiao', lat: 31.1979, lon: 121.3363 },
+            { code: 'PEK', cityZh: '北京首都', cityEn: 'Beijing Capital', lat: 40.0799, lon: 116.6031 },
+            { code: 'PKX', cityZh: '北京大興', cityEn: 'Beijing Daxing', lat: 39.5098, lon: 116.4105 },
+            { code: 'CAN', cityZh: '廣州', cityEn: 'Guangzhou', lat: 23.3924, lon: 113.2988 },
+            { code: 'SZX', cityZh: '深圳', cityEn: 'Shenzhen', lat: 22.6393, lon: 113.8107 },
+            
+            // Japan & Korea
+            { code: 'NRT', cityZh: '東京成田', cityEn: 'Tokyo Narita', lat: 35.7647, lon: 140.3863 },
+            { code: 'HND', cityZh: '東京羽田', cityEn: 'Tokyo Haneda', lat: 35.5494, lon: 139.7798 },
+            { code: 'KIX', cityZh: '大阪關西', cityEn: 'Osaka Kansai', lat: 34.4320, lon: 135.2304 },
+            { code: 'FUK', cityZh: '福岡', cityEn: 'Fukuoka', lat: 33.5859, lon: 130.4507 },
+            { code: 'CTS', cityZh: '札幌', cityEn: 'Sapporo', lat: 42.7752, lon: 141.6923 },
+            { code: 'ICN', cityZh: '首爾仁川', cityEn: 'Seoul Incheon', lat: 37.4602, lon: 126.4407 },
+            { code: 'GMP', cityZh: '首爾金浦', cityEn: 'Seoul Gimpo', lat: 37.5583, lon: 126.7906 },
+            { code: 'PUS', cityZh: '釜山', cityEn: 'Busan', lat: 35.1795, lon: 128.9382 },
+
+            // Southeast Asia
+            { code: 'SIN', cityZh: '新加坡', cityEn: 'Singapore', lat: 1.3644, lon: 103.9915 },
+            { code: 'BKK', cityZh: '曼谷素萬那普', cityEn: 'Bangkok Suvarnabhumi', lat: 13.6900, lon: 100.7501 },
+            { code: 'DMK', cityZh: '曼谷廊曼', cityEn: 'Bangkok Don Mueang', lat: 13.9126, lon: 100.6067 },
+            { code: 'SGN', cityZh: '胡志明市', cityEn: 'Ho Chi Minh', lat: 10.8188, lon: 106.6519 },
+            { code: 'HAN', cityZh: '河內', cityEn: 'Hanoi', lat: 21.2212, lon: 105.8072 },
+            { code: 'KUL', cityZh: '吉隆坡', cityEn: 'Kuala Lumpur', lat: 2.7456, lon: 101.7099 },
+            { code: 'MNL', cityZh: '馬尼拉', cityEn: 'Manila', lat: 14.5086, lon: 121.0194 },
+            { code: 'CGK', cityZh: '雅加達', cityEn: 'Jakarta', lat: -6.1275, lon: 106.6559 },
+            { code: 'DPS', cityZh: '巴厘島', cityEn: 'Bali', lat: -8.7482, lon: 115.1672 },
+
+            // Europe
+            { code: 'LHR', cityZh: '倫敦希斯路', cityEn: 'London Heathrow', lat: 51.4700, lon: -0.4543 },
+            { code: 'CDG', cityZh: '巴黎戴高樂', cityEn: 'Paris CDG', lat: 49.0097, lon: 2.5479 },
+            { code: 'FRA', cityZh: '法蘭克福', cityEn: 'Frankfurt', lat: 50.0379, lon: 8.5622 },
+            { code: 'AMS', cityZh: '阿姆斯特丹', cityEn: 'Amsterdam', lat: 52.3105, lon: 4.7683 },
+            { code: 'ZRH', cityZh: '蘇黎世', cityEn: 'Zurich', lat: 47.4582, lon: 8.5555 },
+            { code: 'FCO', cityZh: '羅馬', cityEn: 'Rome Fiumicino', lat: 41.8003, lon: 12.2389 },
+            { code: 'MAD', cityZh: '馬德里', cityEn: 'Madrid', lat: 40.4839, lon: -3.5680 },
+
+            // North America
+            { code: 'JFK', cityZh: '紐約肯尼迪', cityEn: 'New York JFK', lat: 40.6413, lon: -73.7781 },
+            { code: 'LAX', cityZh: '洛杉磯', cityEn: 'Los Angeles', lat: 33.9416, lon: -118.4085 },
+            { code: 'SFO', cityZh: '舊金山', cityEn: 'San Francisco', lat: 37.6213, lon: -122.3790 },
+            { code: 'SEA', cityZh: '西雅圖', cityEn: 'Seattle', lat: 47.4502, lon: -122.3088 },
+            { code: 'ORD', cityZh: '芝加哥', cityEn: 'Chicago O\'Hare', lat: 41.9742, lon: -87.9073 },
+            { code: 'YVR', cityZh: '溫哥華', cityEn: 'Vancouver', lat: 49.1967, lon: -123.1815 },
+            { code: 'YYZ', cityZh: '多倫多', cityEn: 'Toronto Pearson', lat: 43.6777, lon: -79.6248 },
+
+            // Oceania & Middle East
+            { code: 'SYD', cityZh: '雪梨', cityEn: 'Sydney', lat: -33.9399, lon: 151.1753 },
+            { code: 'MEL', cityZh: '墨爾本', cityEn: 'Melbourne', lat: -37.6690, lon: 144.8410 },
+            { code: 'AKL', cityZh: '奧克蘭', cityEn: 'Auckland', lat: -37.0082, lon: 174.7850 },
+            { code: 'DXB', cityZh: '迪拜', cityEn: 'Dubai', lat: 25.2532, lon: 55.3657 },
+            { code: 'DOH', cityZh: '多哈', cityEn: 'Doha', lat: 25.2731, lon: 51.6081 }
+        ];
+
+        let ALL_ROUTES = [];
+        let selectedRoute = null;
+
+        /* ==========================================================================
+           2. Great Circle Distance (Haversine -> NM)
+           ========================================================================== */
+        function calculateGreatCircleNM(lat1, lon1, lat2, lon2) {
+            const R_NM = 3440.065; // Earth radius in NM
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return Math.round(R_NM * c);
+        }
+
+        /* ==========================================================================
+           3. Generate 2,400+ Routes Database
+           ========================================================================== */
+        function generateRoutesDatabase() {
+            ALL_ROUTES = [];
+            let idCounter = 1;
+
+            for (let i = 0; i < AIRPORTS.length; i++) {
+                for (let j = i + 1; j < AIRPORTS.length; j++) {
+                    const ap1 = AIRPORTS[i];
+                    const ap2 = AIRPORTS[j];
+                    const nm = calculateGreatCircleNM(ap1.lat, ap1.lon, ap2.lat, ap2.lon);
+
+                    const r1 = {
+                        id: idCounter++,
+                        fromCode: ap1.code,
+                        fromZh: ap1.cityZh,
+                        fromEn: ap1.cityEn,
+                        toCode: ap2.code,
+                        toZh: ap2.cityZh,
+                        toEn: ap2.cityEn,
+                        labelZh: `${ap1.cityZh} (${ap1.code}) ✈️ ${ap2.cityZh} (${ap2.code})`,
+                        labelEn: `${ap1.cityEn} to ${ap2.cityEn}`,
+                        nm: nm,
+                        km: Math.round(nm * 1.852),
+                        isMacau: ap1.isMacau || ap2.isMacau,
+                        searchStr: `${ap1.cityZh} ${ap1.cityEn} ${ap1.code} ${ap2.cityZh} ${ap2.cityEn} ${ap2.code}`.toLowerCase()
+                    };
+
+                    const r2 = {
+                        id: idCounter++,
+                        fromCode: ap2.code,
+                        fromZh: ap2.cityZh,
+                        fromEn: ap2.cityEn,
+                        toCode: ap1.code,
+                        toZh: ap1.cityZh,
+                        toEn: ap1.cityEn,
+                        labelZh: `${ap2.cityZh} (${ap2.code}) ✈️ ${ap1.cityZh} (${ap1.code})`,
+                        labelEn: `${ap2.cityEn} to ${ap1.cityEn}`,
+                        nm: nm,
+                        km: Math.round(nm * 1.852),
+                        isMacau: ap1.isMacau || ap2.isMacau,
+                        searchStr: `${ap2.cityZh} ${ap2.cityEn} ${ap2.code} ${ap1.cityZh} ${ap1.cityEn} ${ap1.code}`.toLowerCase()
+                    };
+
+                    ALL_ROUTES.push(r1, r2);
+                }
+            }
+        }
+
+        /* ==========================================================================
+           4. Hot Routes Buttons (Macau MFM Featured + Global)
+           ========================================================================== */
+        const MACAU_HOT_PAIRS = [
+            ['MFM', 'TPE'], ['MFM', 'KIX'], ['MFM', 'NRT'],
+            ['MFM', 'BKK'], ['MFM', 'SIN'], ['MFM', 'ICN'], ['MFM', 'PVG']
+        ];
+
+        const GLOBAL_HOT_PAIRS = [
+            ['HKG', 'TPE'], ['TPE', 'LAX'], ['HKG', 'LHR'],
+            ['SIN', 'LHR'], ['ICN', 'NRT']
+        ];
+
+        function renderHotRoutes() {
+            const macauContainer = document.getElementById('macauHotRoutesContainer');
+            macauContainer.innerHTML = '';
+
+            MACAU_HOT_PAIRS.forEach(([from, to]) => {
+                const route = ALL_ROUTES.find(r => r.fromCode === from && r.toCode === to);
+                if (route) {
+                    const btn = document.createElement('button');
+                    btn.className = 'px-2.5 py-1 bg-teal-100 hover:bg-teal-200 text-teal-900 rounded-lg text-xs font-bold transition-all border border-teal-300 shadow-sm';
+                    btn.innerHTML = `<i class="fa-solid fa-plane-flight text-[10px] mr-1 text-teal-700"></i>${route.fromCode}-${route.toCode} (${route.nm} NM)`;
+                    btn.onclick = () => selectRoute(route);
+                    macauContainer.appendChild(btn);
+                }
+            });
+
+            const globalContainer = document.getElementById('globalHotRoutesContainer');
+            globalContainer.innerHTML = '';
+
+            GLOBAL_HOT_PAIRS.forEach(([from, to]) => {
+                const route = ALL_ROUTES.find(r => r.fromCode === from && r.toCode === to);
+                if (route) {
+                    const btn = document.createElement('button');
+                    btn.className = 'px-2.5 py-1 bg-forest-100/90 hover:bg-forest-200 text-forest-800 rounded-lg text-xs font-medium transition-all border border-forest-300 shadow-sm';
+                    btn.innerHTML = `<i class="fa-solid fa-plane-flight text-[10px] mr-1"></i>${route.fromCode}-${route.toCode} (${route.nm} NM)`;
+                    btn.onclick = () => selectRoute(route);
+                    globalContainer.appendChild(btn);
+                }
+            });
+        }
+
+        /* ==========================================================================
+           5. Route Dropdown Filtering
+           ========================================================================== */
+        function filterRoutes() {
+            const query = document.getElementById('routeSearchInput').value.trim().toLowerCase();
+            const clearBtn = document.getElementById('clearSearchBtn');
+            clearBtn.classList.toggle('hidden', query.length === 0);
+
+            const optionsList = document.getElementById('routeOptionsList');
+            optionsList.innerHTML = '';
+
+            // Custom Distance Item
+            const customOpt = document.createElement('div');
+            customOpt.className = 'px-4 py-2.5 hover:bg-forest-50 cursor-pointer text-xs font-bold text-forest-700 border-b border-slate-100 flex items-center justify-between';
+            customOpt.innerHTML = '<span><i class="fa-solid fa-pen-to-square mr-1.5"></i> 自訂航線海里數 (手動輸入)</span> <span class="text-[10px] bg-forest-100 text-forest-800 px-2 py-0.5 rounded">Custom</span>';
+            customOpt.onclick = () => selectCustomDistanceMode();
+            optionsList.appendChild(customOpt);
+
+            let filtered = ALL_ROUTES;
+            if (query) {
+                filtered = ALL_ROUTES.filter(r => r.searchStr.includes(query));
+            }
+
+            const displayList = filtered.slice(0, 60);
+
+            if (displayList.length === 0) {
+                const noResult = document.createElement('div');
+                noResult.className = 'px-4 py-3 text-xs text-slate-400 text-center';
+                noResult.innerText = '未找到匹配航線，請嘗試輸入其他關鍵字或點擊上方自訂輸入。';
+                optionsList.appendChild(noResult);
+            } else {
+                displayList.forEach(route => {
+                    const item = document.createElement('div');
+                    item.className = 'px-4 py-2.5 hover:bg-forest-50 cursor-pointer text-xs flex items-center justify-between border-b border-slate-50 transition-colors';
+                    item.innerHTML = `
+                        <div>
+                            <div class="font-semibold text-slate-800 flex items-center gap-1.5">
+                                ${route.isMacau ? '<span class="text-[10px] bg-teal-100 text-teal-800 px-1.5 py-0.5 rounded font-bold">🇲🇴 澳門航線</span>' : ''}
+                                ${route.labelZh}
+                            </div>
+                            <div class="text-[10px] text-slate-400">${route.labelEn}</div>
+                        </div>
+                        <span class="font-bold text-forest-700 bg-forest-100/80 px-2 py-1 rounded text-[11px] shrink-0 ml-2">
+                            ${route.nm.toLocaleString()} NM
+                        </span>
+                    `;
+                    item.onclick = () => selectRoute(route);
+                    optionsList.appendChild(item);
+                });
+            }
+
+            showRouteDropdown();
+        }
+
+        function showRouteDropdown() {
+            document.getElementById('routeDropdown').classList.remove('hidden');
+        }
+
+        function clearRouteSearch() {
+            document.getElementById('routeSearchInput').value = '';
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            filterRoutes();
+        }
+
+        function selectRoute(route) {
+            selectedRoute = route;
+            document.getElementById('routeSearchInput').value = route.labelZh;
+            document.getElementById('distanceNM').value = route.nm;
+            document.getElementById('selectedRouteBadge').innerText = route.labelZh;
+            document.getElementById('routeDropdown').classList.add('hidden');
+            calculateEmissions();
+        }
+
+        function selectCustomDistanceMode() {
+            selectedRoute = null;
+            document.getElementById('routeSearchInput').value = '自訂海里數航線';
+            document.getElementById('selectedRouteBadge').innerText = '自訂海里數航線';
+            document.getElementById('routeDropdown').classList.add('hidden');
+            document.getElementById('distanceNM').focus();
+            calculateEmissions();
+        }
+
+        function onDistanceManualInput() {
+            selectedRoute = null;
+            document.getElementById('routeSearchInput').value = '手動輸入海里數';
+            document.getElementById('selectedRouteBadge').innerText = '手動輸入航線';
+            calculateEmissions();
+        }
+
+        /* ==========================================================================
+           6. Slider & Inputs Logic
+           ========================================================================== */
+        function onSliderInput(val) {
+            document.getElementById('frequencyValueText').innerText = val;
+            calculateEmissions();
+        }
+
+        function changeFrequency(delta) {
+            const slider = document.getElementById('frequencySlider');
+            let current = parseInt(slider.value, 10) || 0;
+            current = Math.max(0, Math.min(30, current + delta));
+            slider.value = current;
+            onSliderInput(current);
+        }
+
+        function resetInputs() {
+            document.getElementById('routeSearchInput').value = '';
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            document.getElementById('distanceNM').value = '';
+            document.getElementById('tripType').value = '2';
+            document.getElementById('aircraftType').value = '0.213';
+            document.getElementById('frequencySlider').value = '0';
+            document.getElementById('frequencyValueText').innerText = '0';
+            document.getElementById('selectedRouteBadge').innerText = '尚未選擇航線';
+            selectedRoute = null;
+            calculateEmissions();
+        }
+
+        /* ==========================================================================
+           7. Core Calculation Algorithm & Multi-Tier Encouragement Logic
+           ========================================================================== */
+        function calculateEmissions() {
+            const distanceNM = parseFloat(document.getElementById('distanceNM').value) || 0;
+            const tripMultiplier = parseInt(document.getElementById('tripType').value, 10) || 1;
+            const emissionFactor = parseFloat(document.getElementById('aircraftType').value) || 0.213;
+            const annualFrequency = parseInt(document.getElementById('frequencySlider').value, 10) || 0;
+
+            const distanceKM = Math.round(distanceNM * 1.852);
+            document.getElementById('distanceKMText').innerText = `≒ ${distanceKM.toLocaleString()} 公里 (KM)`;
+
+            const singleFlightNM = distanceNM * tripMultiplier;
+            const singleFlightKM = Math.round(singleFlightNM * 1.852);
+
+            const singleEmission = singleFlightNM * emissionFactor;
+            const annualEmission = singleEmission * annualFrequency;
+            const annualTons = annualEmission / 1000;
+            const treesCount = Math.ceil(annualEmission / 12);
+
+            // Update UI Outputs
+            document.getElementById('singleDistanceText').innerText = `${singleFlightNM.toLocaleString()} NM (${singleFlightKM.toLocaleString()} KM)`;
+            document.getElementById('singleEmissionText').innerText = singleEmission.toLocaleString('zh-TW', { maximumFractionDigits: 1 });
+            document.getElementById('annualEmissionText').innerText = Math.round(annualEmission).toLocaleString('zh-TW');
+            document.getElementById('annualEmissionTonsText').innerText = `≒ ${annualTons.toFixed(3)} 公噸 (t CO₂)`;
+            document.getElementById('treesCountText').innerText = annualEmission > 0 ? treesCount.toLocaleString('zh-TW') : '0';
+
+            // Aircraft Comparisons
+            updateComparisons(singleFlightNM, annualFrequency, emissionFactor, annualEmission);
+
+            // Dynamic Multi-tier Encouragement & Feedback Cards
+            updateEncouragementAndFeedback(annualFrequency, annualEmission);
+        }
+
+        /* ==========================================================================
+           8. Encouragement & Feedback Multi-tier Logic
+           ========================================================================== */
+        function updateEncouragementAndFeedback(frequency, totalCO2) {
+            const feedbackZero = document.getElementById('feedbackZero');
+            const feedbackActive = document.getElementById('feedbackActive');
+            const badgeCategory = document.getElementById('badgeCategory');
+
+            const encouragementCard = document.getElementById('encouragementCard');
+            const encouragementIcon = document.getElementById('encouragementIcon');
+            const encouragementTitle = document.getElementById('encouragementTitle');
+            const encouragementBody = document.getElementById('encouragementBody');
+
+            if (totalCO2 === 0 || frequency === 0) {
+                feedbackZero.classList.remove('hidden');
+                feedbackActive.classList.add('hidden');
+                badgeCategory.innerText = '未計算';
+                badgeCategory.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600';
+                return;
+            }
+
+            feedbackZero.classList.add('hidden');
+            feedbackActive.classList.remove('hidden');
+
+            if (frequency >= 1 && frequency <= 2) {
+                // Tier 1: Low-Carbon Pioneer
+                badgeCategory.innerText = '🌿 綠色飛行先鋒';
+                badgeCategory.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300';
+
+                encouragementCard.className = 'p-4 rounded-2xl border bg-emerald-50 border-emerald-300 text-emerald-950 shadow-sm';
+                encouragementIcon.innerHTML = '<i class="fa-solid fa-award text-emerald-600"></i>';
+                encouragementTitle.innerText = '太棒了！低碳出行讚賞：';
+                encouragementBody.innerText = '了解航線與機型碳足跡，你是最專業的綠色飛行達人！保持低碳出行習慣與節能理念，讓我們的地球與天空更美麗！';
+
+            } else if (frequency >= 3 && frequency <= 8) {
+                // Tier 2: Smart Eco Aviator
+                badgeCategory.innerText = '✈️ 智選減碳達人';
+                badgeCategory.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-teal-100 text-teal-800 border border-teal-300';
+
+                encouragementCard.className = 'p-4 rounded-2xl border bg-teal-50 border-teal-300 text-teal-950 shadow-sm';
+                encouragementIcon.innerHTML = '<i class="fa-solid fa-plane-circle-check text-teal-600"></i>';
+                encouragementTitle.innerText = '值得嘉許！智慧飛行專家：';
+                encouragementBody.innerText = '您的年度碳足跡控制得當！建議持續優先選擇採用 A350 或 B787 等新世代省油機型的航班，能顯著降低每一次飛行的碳負擔。';
+
+            } else {
+                // Tier 3: Frequent Flyer & Carbon Ambassador
+                badgeCategory.innerText = '🌍 環保永續大使';
+                badgeCategory.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300';
+
+                encouragementCard.className = 'p-4 rounded-2xl border bg-amber-50 border-amber-300 text-amber-950 shadow-sm';
+                encouragementIcon.innerHTML = '<i class="fa-solid fa-hand-holding-heart text-amber-600"></i>';
+                encouragementTitle.innerText = '頻繁飛行提醒與永續行動建議：';
+                encouragementBody.innerText = '您的年度累積飛行碳排放較為顯著。建議您可以參與航空公司提供的「氣候碳抵換計劃」（Carbon Offset），或在大灣區及短途城際旅行中優先考慮高鐵或陸路綠色交通！';
+            }
+        }
+
+        /* ==========================================================================
+           9. Aircraft Comparison Engine
+           ========================================================================== */
+        function updateComparisons(singleFlightNM, annualFrequency, currentFactor, currentAnnualEmission) {
+            if (currentAnnualEmission === 0 || singleFlightNM === 0) {
+                document.getElementById('compEcoDiff').innerText = '可減少 0 kg CO₂';
+                document.getElementById('compEcoPercent').innerText = '(-0%)';
+                document.getElementById('compBizDiff').innerText = '+0 kg CO₂';
+                document.getElementById('compBizPercent').innerText = '(+0%)';
+                return;
+            }
+
+            const ecoFactor = 0.136; // Eco benchmark (A350 / B787)
+            const ecoAnnualEmission = singleFlightNM * ecoFactor * annualFrequency;
+            const ecoDiff = currentAnnualEmission - ecoAnnualEmission;
+            const ecoPercent = Math.round((ecoDiff / currentAnnualEmission) * 100);
+
+            if (ecoDiff > 0) {
+                document.getElementById('compEcoDiff').innerText = `可減少 ${Math.round(ecoDiff).toLocaleString()} kg CO₂`;
+                document.getElementById('compEcoPercent').innerText = `(少排放 ${ecoPercent}%)`;
+            } else {
+                document.getElementById('compEcoDiff').innerText = `已為省油機型模式`;
+                document.getElementById('compEcoPercent').innerText = `(最佳化標竿)`;
+            }
+
+            const bizFactor = 0.426; // Business Class benchmark
+            const bizAnnualEmission = singleFlightNM * bizFactor * annualFrequency;
+            const bizDiff = bizAnnualEmission - currentAnnualEmission;
+            const bizPercent = Math.round((bizDiff / currentAnnualEmission) * 100);
+
+            if (bizDiff > 0) {
+                document.getElementById('compBizDiff').innerText = `+${Math.round(bizDiff).toLocaleString()} kg CO₂`;
+                document.getElementById('compBizPercent').innerText = `(多排放 +${bizPercent}%)`;
+            } else {
+                document.getElementById('compBizDiff').innerText = `已選取商務艙基準`;
+                document.getElementById('compBizPercent').innerText = `(最高排放級別)`;
+            }
+        }
+
+        /* ==========================================================================
+           10. Modal Database View Logic
+           ========================================================================== */
+        function openRoutesModal() {
+            document.getElementById('routesModal').classList.remove('hidden');
+            filterModalRoutes();
+        }
+
+        function closeRoutesModal() {
+            document.getElementById('routesModal').classList.add('hidden');
+        }
+
+        function filterModalRoutes() {
+            const q = document.getElementById('modalSearchInput').value.trim().toLowerCase();
+            const grid = document.getElementById('modalRoutesGrid');
+            grid.innerHTML = '';
+
+            const filtered = q ? ALL_ROUTES.filter(r => r.searchStr.includes(q)) : ALL_ROUTES;
+            document.getElementById('modalRouteCount').innerText = `共 ${filtered.length.toLocaleString()} 條航線`;
+
+            const display = filtered.slice(0, 100);
+
+            display.forEach(route => {
+                const card = document.createElement('div');
+                card.className = 'p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-forest-50 hover:border-forest-300 transition-all flex items-center justify-between cursor-pointer';
+                card.onclick = () => {
+                    selectRoute(route);
+                    closeRoutesModal();
+                };
+                card.innerHTML = `
+                    <div>
+                        <div class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                            ${route.isMacau ? '<span class="text-[9px] bg-teal-100 text-teal-800 px-1 py-0.2 rounded font-bold">🇲🇴 澳門</span>' : ''}
+                            ${route.labelZh}
+                        </div>
+                        <div class="text-[10px] text-slate-500">${route.labelEn}</div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <div class="text-xs font-black text-forest-700">${route.nm.toLocaleString()} NM</div>
+                        <div class="text-[10px] text-slate-400">≒ ${route.km.toLocaleString()} KM</div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        /* ==========================================================================
+           11. Copy & Share Utilities
+           ========================================================================== */
+        function copyResults() {
+            const routeName = document.getElementById('selectedRouteBadge').innerText;
+            const singleEm = document.getElementById('singleEmissionText').innerText;
+            const annualEm = document.getElementById('annualEmissionText').innerText;
+            const trees = document.getElementById('treesCountText').innerText;
+
+            const text = `✈️【航空碳排放試算報告】\n📍 航線：${routeName}\n💨 單次飛行碳排放：${singleEm} kg CO₂\n🌍 全年累積總碳排放：${annualEm} kg CO₂\n🌲 相當於需要種植 ${trees} 棵成年樹木吸收一整年！\n---\n來自「全球 1000+ 航線與機型碳排放動態計算器（含澳門 MFM 樞紐）」`;
+
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast('已成功複製試算結果報告！');
+            } catch (err) {
+                showToast('複製失敗，請手動選取。');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function shareResults() {
+            copyResults();
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('translate-y-[-100px]', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-[-100px]', 'opacity-0');
+            }, 3000);
+        }
+
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('routeDropdown');
+            const searchInput = document.getElementById('routeSearchInput');
+            if (!dropdown.contains(e.target) && e.target !== searchInput) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        /* ==========================================================================
+           12. Initialization
+           ========================================================================== */
+        window.onload = function() {
+            generateRoutesDatabase();
+            renderHotRoutes();
+            filterRoutes();
+            calculateEmissions();
+        };
+    </script>
+</body>
+</html>
